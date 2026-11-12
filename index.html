@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Extra-Curricular Activities | Winchester P.S.</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1f3a68">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Extra-Curriculars">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <img src="icons/logo.png" alt="Winchester P.S. Extra Curriculars" class="logo">
+    <h1 class="sr-only">Extra-Curricular Activities</h1>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="add" role="tab">Add Activity</button>
+      <button class="tab" data-tab="newsletter" role="tab">Newsletter</button>
+    </nav>
+  </header>
+
+  <div id="setup" class="banner hidden">
+    The app isn't connected to its Google Sheet yet. Paste the Apps Script web app URL into <code>config.js</code> (see README).
+  </div>
+
+  <main>
+    <!-- ===== Teachers ===== -->
+    <section id="tab-add">
+      <form id="form" class="card" autocomplete="off">
+        <h2 id="form-title">Add an activity</h2>
+
+        <label>Week of
+          <select id="week"></select>
+          <div class="week-note">Moves to the next week automatically every Sunday.</div>
+        </label>
+
+        <label>Activity name *
+          <input id="name" required maxlength="120" placeholder="e.g. Chess Club">
+        </label>
+
+        <fieldset>
+          <legend>Day(s) *</legend>
+          <div class="days" id="days"></div>
+        </fieldset>
+
+        <div class="row">
+          <label>Start time *
+            <input id="start" type="time" required>
+          </label>
+          <label>End time
+            <input id="end" type="time">
+          </label>
+        </div>
+
+        <label>Location *
+          <input id="location" required maxlength="120" placeholder="e.g. Library, Gym, Room 12">
+        </label>
+
+        <div class="row">
+          <label>Teacher / supervisor
+            <input id="teacher" maxlength="120" placeholder="e.g. Mr. Smith">
+          </label>
+          <label>Grades invited
+            <input id="grades" maxlength="60" placeholder="e.g. Grades 4–6">
+          </label>
+        </div>
+
+        <label>Notes
+          <textarea id="notes" rows="2" maxlength="300" placeholder="e.g. Bring indoor shoes"></textarea>
+        </label>
+
+        <p id="form-msg" class="msg" aria-live="polite"></p>
+        <div class="actions">
+          <button type="submit" id="save" class="primary">Add activity</button>
+          <button type="button" id="cancel" class="hidden">Cancel edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <h2>Already entered for <span id="list-week"></span></h2>
+        <p class="hint">Check here first so the same activity isn't added twice.</p>
+        <div id="list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ===== Secretary ===== -->
+    <section id="tab-newsletter" class="hidden">
+      <div class="card">
+        <h2>Newsletter list</h2>
+        <div class="row">
+          <label>Week of
+            <select id="nl-week"></select>
+            <div class="week-note">Previous weeks are listed under "Look back".</div>
+          </label>
+          <label>Layout
+            <select id="nl-layout">
+              <option value="day">Grouped by day</option>
+              <option value="table">Table</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="copy" class="primary">Copy for Google Doc</button>
+          <button id="refresh">Refresh</button>
+        </div>
+        <p id="nl-msg" class="msg" aria-live="polite"></p>
+      </div>
+
+      <div class="card">
+        <p class="hint">Preview: this is what will paste into the newsletter.</p>
+        <div id="output" class="output"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
