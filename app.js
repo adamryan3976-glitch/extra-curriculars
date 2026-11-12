@@ -43,103 +43,55 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function clock(t) {
-    var p = t.split(':').map(Number);
-    var h = p[0] % 12 || 12;
-    return { text: h + ':' + String(p[1]).padStart(2, '0'), ampm: p[0] < 12 ? 'a.m.' : 'p.m.' };
-  }
-  function timeRange(start, end) {
-    if (!start) return '';
-    var s = clock(start);
-    if (!end) return s.text + ' ' + s.ampm;
-    var e = clock(end);
-    if (s.ampm === e.ampm) return s.text + '–' + e.text + ' ' + e.ampm;
-    return s.text + ' ' + s.ampm + '–' + e.text + ' ' + e.ampm;
-  }
-  function byTime(a, b) {
-    return (a.start || '99').localeCompare(b.start || '99') || a.name.localeCompare(b.name);
-  }
+  var PERIODS = ['Before School', 'Lunch', 'After School'];
+  function byName(a, b) { return a.name.localeCompare(b.name); }
 
-  // Flatten activities into one entry per day they run.
-  function byDay(activities) {
-    var map = {};
-    DAYS.forEach(function (d) { map[d] = []; });
-    activities.forEach(function (a) {
-      (a.days || []).forEach(function (d) { if (map[d]) map[d].push(a); });
-    });
-    DAYS.forEach(function (d) { map[d].sort(byTime); });
-    return map;
-  }
-
-  // ---------- Newsletter output (inline styles so it pastes cleanly into Google Docs) ----------
-  function renderNewsletter(activities, week, layout, school) {
+  // ---------- Newsletter grid (inline styles so it pastes cleanly into Google Docs) ----------
+  // Rows = time periods, columns = Monday–Friday.
+  function renderNewsletter(activities, week) {
     var title = '<p style="font-size:14pt;margin:0 0 8pt"><b>Extra-Curricular Activities: Week of ' +
       esc(weekLabel(week)) + '</b></p>';
     if (!activities.length) {
       return title + '<p><i>No extra-curricular activities have been entered for this week yet.</i></p>';
     }
-    var map = byDay(activities);
-    return title + (layout === 'table' ? tableHtml(map, week) : listHtml(map, week));
-  }
+    var grid = {};
+    PERIODS.forEach(function (p) {
+      grid[p] = {};
+      DAYS.forEach(function (d) { grid[p][d] = []; });
+    });
+    activities.forEach(function (a) {
+      if (!grid[a.period]) return;
+      (a.days || []).forEach(function (d) { if (grid[a.period][d]) grid[a.period][d].push(a); });
+    });
 
-  function listHtml(map, week) {
-    var html = '';
+    var cell = 'border:1px solid #999;padding:5pt;vertical-align:top;font-size:10pt;';
+    var head = cell + 'background:#1f3a68;color:#ffffff;text-align:center;';
+    var html = '<table style="border-collapse:collapse;width:100%;table-layout:fixed"><tbody><tr>' +
+      '<td style="' + head + 'width:14%"></td>';
     DAYS.forEach(function (d) {
-      if (!map[d].length) return;
-      html += '<p style="margin:10pt 0 2pt"><b>' + d + ', ' + esc(longDate(dayDate(week, d))) + '</b></p><ul style="margin:0 0 6pt">';
-      map[d].forEach(function (a) {
-        var bits = [timeRange(a.start, a.end), a.location].filter(Boolean).join(', ');
-        var extra = [a.grades, a.teacher].filter(Boolean).join('; ');
-        html += '<li><b>' + esc(a.name) + '</b> – ' + esc(bits) +
-          (extra ? ' (' + esc(extra) + ')' : '') +
-          (a.notes ? '. ' + esc(a.notes.replace(/\.$/, '')) + '.' : '') + '</li>';
-      });
-      html += '</ul>';
+      html += '<td style="' + head + '"><b>' + d + '</b><br>' + esc(longDate(dayDate(week, d))) + '</td>';
     });
-    return html;
-  }
-
-  function tableHtml(map, week) {
-    var all = [];
-    DAYS.forEach(function (d) { map[d].forEach(function (a) { all.push(a); }); });
-    var cols = [
-      { h: 'Day', f: null },
-      { h: 'Activity', f: function (a) { return '<b>' + esc(a.name) + '</b>'; } },
-      { h: 'Time', f: function (a) { return esc(timeRange(a.start, a.end)); } },
-      { h: 'Location', f: function (a) { return esc(a.location); } },
-      { h: 'Grades', f: function (a) { return esc(a.grades); }, key: 'grades' },
-      { h: 'Supervisor', f: function (a) { return esc(a.teacher); }, key: 'teacher' },
-      { h: 'Notes', f: function (a) { return esc(a.notes); }, key: 'notes' }
-    ].filter(function (c) {
-      // Hide optional columns nobody filled in.
-      return !c.key || all.some(function (a) { return a[c.key]; });
-    });
-
-    var cell = 'border:1px solid #999;padding:4pt 6pt;vertical-align:top;';
-    var html = '<table style="border-collapse:collapse;width:100%"><thead><tr>';
-    cols.forEach(function (c) {
-      html += '<th style="' + cell + 'background:#e8edf5;text-align:left">' + c.h + '</th>';
-    });
-    html += '</tr></thead><tbody>';
-    DAYS.forEach(function (d) {
-      map[d].forEach(function (a, i) {
-        html += '<tr>';
-        cols.forEach(function (c) {
-          if (c.f === null) {
-            html += '<td style="' + cell + '">' + (i === 0 ? '<b>' + d + '</b><br>' + esc(longDate(dayDate(week, d))) : '') + '</td>';
-          } else {
-            html += '<td style="' + cell + '">' + c.f(a) + '</td>';
-          }
+    html += '</tr>';
+    PERIODS.forEach(function (p) {
+      html += '<tr><td style="' + cell + 'background:#e8edf5;vertical-align:middle"><b>' + p + '</b></td>';
+      DAYS.forEach(function (d) {
+        var items = grid[p][d].sort(byName).map(function (a) {
+          var extra = [a.grades, a.teacher].filter(Boolean).join('; ');
+          return '<b>' + esc(a.name) + '</b>' +
+            (a.location ? '<br>' + esc(a.location) : '') +
+            (extra ? '<br>' + esc(extra) : '') +
+            (a.notes ? '<br><i>' + esc(a.notes) + '</i>' : '');
         });
-        html += '</tr>';
+        html += '<td style="' + cell + '">' + items.join('<br><br>') + '</td>';
       });
+      html += '</tr>';
     });
-    return html + '</tbody></table>';
+    return title + html + '</tbody></table>';
   }
 
   // Expose pure helpers for testing in Node.
   if (typeof module !== 'undefined') {
-    module.exports = { renderNewsletter: renderNewsletter, timeRange: timeRange, mondayOf: mondayOf, iso: iso, weekLabel: weekLabel, planningWeek: planningWeek };
+    module.exports = { renderNewsletter: renderNewsletter, mondayOf: mondayOf, iso: iso, weekLabel: weekLabel, planningWeek: planningWeek };
   }
   if (typeof document === 'undefined') return;
 
@@ -227,6 +179,12 @@
     l.innerHTML = '<input type="checkbox" value="' + d + '"><span>' + d + '</span>';
     $('days').appendChild(l);
   });
+  PERIODS.forEach(function (p) {
+    var l = document.createElement('label');
+    l.innerHTML = '<input type="radio" name="period" value="' + p + '"><span>' + p + '</span>';
+    $('periods').appendChild(l);
+  });
+  function periodBoxes() { return Array.prototype.slice.call($('periods').querySelectorAll('input')); }
   function dayBoxes() { return Array.prototype.slice.call($('days').querySelectorAll('input')); }
 
   // Tabs (#newsletter in the URL opens the secretary view directly)
@@ -253,12 +211,12 @@
       if (!acts.length) { list.innerHTML = '<p class="empty">Nothing entered yet for this week.</p>'; return; }
       list.innerHTML = '';
       acts.slice().sort(function (a, b) {
-        return DAYS.indexOf(a.days[0]) - DAYS.indexOf(b.days[0]) || byTime(a, b);
+        return DAYS.indexOf(a.days[0]) - DAYS.indexOf(b.days[0]) || PERIODS.indexOf(a.period) - PERIODS.indexOf(b.period) || byName(a, b);
       }).forEach(function (a) {
         var div = document.createElement('div');
         div.className = 'item';
         div.innerHTML = '<div><b>' + esc(a.name) + '</b><div class="meta">' +
-          esc(a.days.join(', ')) + ' · ' + esc(timeRange(a.start, a.end)) + ' · ' + esc(a.location) +
+          esc(a.days.join(', ')) + ' · ' + esc(a.period) + ' · ' + esc(a.location) +
           (a.teacher ? ' · ' + esc(a.teacher) : '') + '</div></div>' +
           '<div class="btns"><button data-act="edit">Edit</button><button data-act="del">Delete</button></div>';
         div.querySelector('[data-act=edit]').onclick = function () { startEdit(a); };
@@ -274,8 +232,7 @@
   function startEdit(a) {
     editingId = a.id;
     $('name').value = a.name;
-    $('start').value = a.start;
-    $('end').value = a.end;
+    periodBoxes().forEach(function (b) { b.checked = b.value === a.period; });
     $('location').value = a.location;
     $('teacher').value = a.teacher;
     $('grades').value = a.grades;
@@ -289,7 +246,8 @@
   }
   function resetForm() {
     editingId = null;
-    ['name', 'start', 'end', 'location', 'teacher', 'grades', 'notes'].forEach(function (id) { $(id).value = ''; });
+    periodBoxes().forEach(function (b) { b.checked = false; });
+    ['name', 'location', 'teacher', 'grades', 'notes'].forEach(function (id) { $(id).value = ''; });
     dayBoxes().forEach(function (b) { b.checked = false; });
     $('form-title').textContent = 'Add an activity';
     $('save').textContent = 'Add activity';
@@ -311,17 +269,15 @@
     var msg = $('form-msg');
     var days = dayBoxes().filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
     if (!days.length) { setMsg(msg, 'Please pick at least one day.', 'err'); return; }
-    if ($('end').value && $('end').value <= $('start').value) {
-      setMsg(msg, 'End time should be after the start time.', 'err'); return;
-    }
+    var period = (periodBoxes().filter(function (b) { return b.checked; })[0] || {}).value;
+    if (!period) { setMsg(msg, 'Please pick Before School, Lunch or After School.', 'err'); return; }
     if (!SCRIPT_URL) { setMsg(msg, 'The app isn\'t connected to its Google Sheet yet.', 'err'); return; }
     var activity = {
       id: editingId || '',
       week: $('week').value,
       days: days,
       name: $('name').value.trim(),
-      start: $('start').value,
-      end: $('end').value,
+      period: period,
       location: $('location').value.trim(),
       teacher: $('teacher').value.trim(),
       grades: $('grades').value.trim(),
@@ -348,13 +304,12 @@
     out.innerHTML = '<p class="empty">Loading…</p>';
     load(week, force).then(function (acts) {
       if ($('nl-week').value !== week) return;
-      out.innerHTML = renderNewsletter(acts, week, $('nl-layout').value, window.SCHOOL_NAME);
+      out.innerHTML = renderNewsletter(acts, week);
     }).catch(function (e) {
       out.innerHTML = '<p class="msg err">Couldn\'t load activities: ' + esc(e.message) + '</p>';
     });
   }
   $('nl-week').addEventListener('change', function () { renderOutput(false); });
-  $('nl-layout').addEventListener('change', function () { renderOutput(false); });
   $('refresh').onclick = function () { setMsg($('nl-msg'), ''); renderOutput(true); };
 
   $('copy').onclick = function () {

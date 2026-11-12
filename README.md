@@ -55,9 +55,9 @@ window.SCRIPT_URL = "https://script.google.com/macros/s/XXXXXXXX/exec";
 
 **Add to home screen:** on iPhone, open the site in Safari, tap Share, then **Add to Home Screen**. On Android, open it in Chrome, tap ⋮, then **Add to Home screen** or **Install app**.
 
-**Teachers:** the week is already set to the next newsletter's week (you can also pick the two weeks after it to plan ahead), fill in the activity, choose one or more days, and click **Add activity**. The list underneath shows what's already entered, with Edit and Delete buttons.
+**Teachers:** the week is already set to the next newsletter's week (you can also pick the two weeks after it to plan ahead). Fill in the activity, choose one or more days, choose **Before School**, **Lunch** or **After School**, and click **Add activity**. The list underneath shows what's already entered, with Edit and Delete buttons.
 
-**Secretary (Friday):** open the Newsletter tab (it opens on the right week), choose **Grouped by day** or **Table**, click **Copy for Google Doc**, and paste into the newsletter.
+**Secretary (Friday):** open the Newsletter tab (it opens on the right week). The preview is a chart with Monday–Friday across the top and Before School / Lunch / After School down the side, and each activity sits in its box. Click **Copy for Google Doc** and paste into the newsletter.
 
 ## Changing the backend code later
 After you edit `Code.gs`, go to **Deploy → Manage deployments → ✏️ Edit**, set Version to **New version**, and click **Deploy**. Doing it this way keeps the same URL, so `config.js` doesn't need to change.

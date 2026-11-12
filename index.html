@@ -49,14 +49,10 @@
           <div class="days" id="days"></div>
         </fieldset>
 
-        <div class="row">
-          <label>Start time *
-            <input id="start" type="time" required>
-          </label>
-          <label>End time
-            <input id="end" type="time">
-          </label>
-        </div>
+        <fieldset>
+          <legend>Time *</legend>
+          <div class="days" id="periods"></div>
+        </fieldset>
 
         <label>Location *
           <input id="location" required maxlength="120" placeholder="e.g. Library, Gym, Room 12">
@@ -97,12 +93,6 @@
           <label>Week of
             <select id="nl-week"></select>
             <div class="week-note">Previous weeks are listed under "Look back".</div>
-          </label>
-          <label>Layout
-            <select id="nl-layout">
-              <option value="day">Grouped by day</option>
-              <option value="table">Table</option>
-            </select>
           </label>
         </div>
         <div class="actions">
