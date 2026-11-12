@@ -9,8 +9,9 @@
  */
 
 const SHEET_NAME = 'Activities';
-const HEADERS = ['id', 'week', 'days', 'name', 'start', 'end', 'location', 'teacher', 'grades', 'notes', 'updated'];
+const HEADERS = ['id', 'week', 'days', 'name', 'period', 'location', 'teacher', 'grades', 'notes', 'updated'];
 const VALID_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const VALID_PERIODS = ['Before School', 'Lunch', 'After School'];
 
 function getSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -23,6 +24,9 @@ function getSheet_() {
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
   }
+  // Keep the header row in step with HEADERS if the layout ever changes.
+  const header = sh.getRange(1, 1, 1, HEADERS.length);
+  if (header.getDisplayValues()[0].join('|') !== HEADERS.join('|')) header.setValues([HEADERS]).setFontWeight('bold');
   return sh;
 }
 
@@ -60,7 +64,8 @@ function clean_(a) {
     return VALID_DAYS.indexOf(d) !== -1;
   });
   if (!days.length) throw new Error('Pick at least one day');
-  const time = function (t) { t = String(t || ''); return /^\d{2}:\d{2}$/.test(t) ? t : ''; };
+  const period = String(a.period || '');
+  if (VALID_PERIODS.indexOf(period) === -1) throw new Error('Pick Before School, Lunch or After School');
   const name = text_(a.name, 120);
   if (!name) throw new Error('Activity name is required');
   return {
@@ -68,8 +73,7 @@ function clean_(a) {
     week: week,
     days: days.join(','),
     name: name,
-    start: time(a.start),
-    end: time(a.end),
+    period: period,
     location: text_(a.location, 120),
     teacher: text_(a.teacher, 120),
     grades: text_(a.grades, 60),
